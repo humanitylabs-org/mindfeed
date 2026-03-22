@@ -1,6 +1,6 @@
 {
-  "name": "SRS Review",
-  "short_name": "SRS Review",
+  "name": "MindFeed",
+  "short_name": "MindFeed",
   "description": "Resurface ideas at the right time",
   "start_url": "/",
   "display": "standalone",

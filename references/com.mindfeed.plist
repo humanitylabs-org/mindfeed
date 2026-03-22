@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.srs-review</string>
+    <string>com.mindfeed</string>
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/python3</string>
@@ -16,8 +16,8 @@
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/srs-review.log</string>
+    <string>/tmp/mindfeed.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/srs-review.err</string>
+    <string>/tmp/mindfeed.err</string>
 </dict>
 </plist>

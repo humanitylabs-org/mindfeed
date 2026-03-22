@@ -1,14 +1,14 @@
 ---
-name: srs-review
+name: mindfeed
 description: "Spaced repetition review system for resurfacing ideas at optimal intervals. Use when: (1) user wants to create review cards from conversations or notes, (2) user asks to add something to their review deck, (3) managing the review server, (4) generating cards from content. NOT for: traditional flashcard memorization — this is for idea integration and pattern-matching."
 metadata:
   openclaw:
-    emoji: "🔄"
+    emoji: "🧠"
     requires:
       anyBins: ["python3"]
 ---
 
-# SRS Review — Spaced Repetition for Ideas
+# MindFeed — Spaced Repetition for Ideas
 
 A self-hosted spaced repetition app that resurfaces ideas at increasing intervals. Unlike traditional Anki, this is designed for **idea integration** — revisiting concepts so they connect with new experiences over time.
 
