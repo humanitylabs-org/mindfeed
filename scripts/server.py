@@ -60,6 +60,11 @@ class VaultReviewHandler(http.server.BaseHTTPRequestHandler):
             self._serve_file(os.path.join(ASSETS_DIR, "manifest.json"), "application/manifest+json")
             return
 
+        # Serve service worker (must be at root scope)
+        if self.path == "/sw.js":
+            self._serve_file(os.path.join(ASSETS_DIR, "sw.js"), "application/javascript")
+            return
+
         # Route requests
         if self.path == "/" or self.path == "":
             self._serve_file(os.path.join(ASSETS_DIR, "index.html"), "text/html")

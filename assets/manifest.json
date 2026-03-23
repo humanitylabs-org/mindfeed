@@ -1,10 +1,19 @@
 {
   "name": "MindFeed",
   "short_name": "MindFeed",
-  "description": "Resurface ideas at the right time",
+  "description": "Spaced repetition for ideas, not facts",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",
   "theme_color": "#0a0a0f",
-  "icons": []
+  "orientation": "portrait",
+  "categories": ["productivity", "education"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }
