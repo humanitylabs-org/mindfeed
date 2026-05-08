@@ -17,15 +17,22 @@ A self-hosted spaced repetition app that resurfaces ideas at increasing interval
 ### Start the server
 
 ```bash
-python3 <skill_dir>/scripts/server.py --port 8787
+python3 <skill_dir>/scripts/server.py --port 8787 --base-path /mindfeed
 ```
 
-The app is available at `http://localhost:8787`. On first run, it creates `cards.json` from example cards and an empty `review-state.json`.
+The app is available at `http://localhost:8787/mindfeed`. On first run, it creates `cards.json` from example cards and an empty `review-state.json`.
 
 ### Custom data directory
 
 ```bash
-python3 <skill_dir>/scripts/server.py --port 8787 --dir /path/to/my/cards
+python3 <skill_dir>/scripts/server.py --port 8787 --base-path /mindfeed --dir /path/to/my/cards
+```
+
+### Custom port or path
+
+```bash
+python3 <skill_dir>/scripts/server.py --port 9999 --base-path /mindfeed
+python3 <skill_dir>/scripts/server.py --port 8787 --base-path /mycustompath
 ```
 
 ## Card Format
@@ -112,7 +119,7 @@ Users rate cards 0-3:
 ## PWA Setup
 
 For mobile home screen access:
-1. Open `http://localhost:8787` (or Tailscale URL) in mobile browser
+1. Open `http://localhost:8787/mindfeed` (or Tailscale URL) in mobile browser
 2. "Add to Home Screen" — creates an app icon
 3. Opens as a standalone app without browser chrome
 

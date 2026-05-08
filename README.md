@@ -37,17 +37,17 @@ Your agent will auto-detect the skill on next session.
 ### 1. Start the server
 
 ```bash
-python3 ~/.openclaw/skills/mindfeed/scripts/server.py --port 8787
+python3 ~/.openclaw/skills/mindfeed/scripts/server.py --port 8787 --base-path /mindfeed
 ```
 
 You should see:
 ```
-🔮 MindFeed server on http://localhost:8787
+🔮 MindFeed server on http://localhost:8787/mindfeed
 ```
 
 ### 2. Open in your browser
 
-Navigate to `http://localhost:8787` — you'll see the review app with example cards.
+Navigate to `http://localhost:8787/mindfeed` — you'll see the review app with example cards.
 
 ### 3. Add to phone home screen (PWA)
 
@@ -71,7 +71,7 @@ Now you have a home screen icon that opens MindFeed without browser chrome.
 
 If you want to access MindFeed from your phone when away from home:
 
-- **Tailscale:** If your Mac is on Tailscale, use your Tailscale URL (e.g., `http://your-machine.tailnet:8787`)
+- **Tailscale:** If your Mac is on Tailscale, use your Tailscale URL (e.g., `https://your-machine.ts.net/mindfeed`)
 - **Local network:** Use your Mac's local IP (e.g., `http://192.168.1.x:8787`)
 
 ## How Your Agent Uses It
@@ -123,7 +123,12 @@ python3 scripts/server.py --port 8787 --dir ~/my-mindfeed-data
 
 ### Custom port
 ```bash
-python3 scripts/server.py --port 9999
+python3 scripts/server.py --port 9999 --base-path /mindfeed
+```
+
+### Custom base path (for tailnet app URLs)
+```bash
+python3 scripts/server.py --port 8787 --base-path /mycustompath
 ```
 
 ### Run as a background service (macOS)

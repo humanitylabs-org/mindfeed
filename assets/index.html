@@ -2,13 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="__MINDFEED_BASE_PATH__/manifest.json">
 <meta name="theme-color" content="#0a0a0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MindFeed">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔮 MindFeed</title>
+<script>
+  window.__MINDFEED_BASE_PATH = "__MINDFEED_BASE_PATH__";
+</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { overflow-x: hidden; scrollbar-gutter: stable; }
@@ -154,6 +157,18 @@
 <div class="deck-info" id="deckInfo"></div>
 
 <script>
+const BASE_PATH = (() => {
+  const raw = (window.__MINDFEED_BASE_PATH || '').trim();
+  if (!raw || raw === '/') return '';
+  const clean = raw.replace(/^\/+|\/+$/g, '');
+  return clean ? '/' + clean : '';
+})();
+
+function appPath(path) {
+  if (!path.startsWith('/')) path = '/' + path;
+  return `${BASE_PATH}${path}`;
+}
+
 // ---- Markdown to HTML ----
 function md(text) {
   text = text.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2');
@@ -206,7 +221,7 @@ function getState() { return _state; }
 
 async function loadState() {
   try {
-    const resp = await fetch('/review-state.json?t=' + Date.now(), { cache: 'no-store' });
+    const resp = await fetch(appPath('/review-state.json?t=' + Date.now()), { cache: 'no-store' });
     if (resp.ok) {
       _state = await resp.json();
       console.log('Loaded state:', Object.keys(_state).length, 'cards');
@@ -219,7 +234,7 @@ async function loadState() {
 
 function saveState(state) {
   _state = state;
-  fetch('/review-state.json', {
+  fetch(appPath('/review-state.json'), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(state, null, 2)
@@ -306,7 +321,10 @@ async function showNext() {
     content = currentCard.content;
   } else {
     try {
-      const resp = await fetch('/' + encodeURI(currentCard.path));
+      const cardPath = currentCard.path.startsWith('/')
+        ? currentCard.path
+        : '/' + encodeURI(currentCard.path);
+      const resp = await fetch(appPath(cardPath));
       if (resp.ok) {
         content = await resp.text();
       } else {
@@ -409,7 +427,7 @@ function updateIntervalLabels(card) {
 async function boot() {
   await loadState();
   try {
-    const resp = await fetch('/cards.json');
+    const resp = await fetch(appPath('/cards.json'));
     allCards = await resp.json();
     initSession();
   } catch(err) {
@@ -418,7 +436,9 @@ async function boot() {
   }
 }
 boot();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register(appPath('/sw.js'));
+}
 </script>
 </body>
 </html>
