@@ -1,5 +1,12 @@
-const CACHE = 'mindfeed-v1';
-const ASSETS = ['/', '/cards.json', '/manifest.json'];
+const CACHE = 'mindfeed-v2';
+const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
+
+function scoped(path) {
+  const clean = path.startsWith('/') ? path : `/${path}`;
+  return `${SCOPE_PATH}${clean}`;
+}
+
+const ASSETS = [scoped('/'), scoped('/cards.json'), scoped('/manifest.json'), scoped('/sw.js')];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
