@@ -131,6 +131,10 @@ python3 scripts/server.py --port 9999 --base-path /mindfeed
 python3 scripts/server.py --port 8787 --base-path /mycustompath
 ```
 
+PWA note:
+- MindFeed manifest `id`, `start_url`, and `scope` are generated from `--base-path`.
+- This lets `/mindfeed`, `/bookcompressor`, etc. install as separate PWAs on the same domain.
+
 ### Run as a background service (macOS)
 Create a LaunchAgent for auto-start — ask your OpenClaw agent to set this up for you.
 

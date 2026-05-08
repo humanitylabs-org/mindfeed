@@ -105,7 +105,10 @@ class VaultReviewHandler(http.server.BaseHTTPRequestHandler):
             data = json.load(f)
 
         base = BASE_PATH or ""
-        data["start_url"] = f"{base}/" if base else "/"
+        scoped_root = f"{base}/" if base else "/"
+        data["id"] = scoped_root
+        data["start_url"] = scoped_root
+        data["scope"] = scoped_root
         return json.dumps(data)
 
     def _safe_asset_path(self, clean_path: str):
