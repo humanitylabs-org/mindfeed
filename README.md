@@ -1,11 +1,11 @@
 # 🔮 MindFeed
 *by [Humanity Labs](https://humanitylabs.ai)*
 
-**Spaced repetition for ideas — an [OpenClaw](https://openclaw.ai) skill.**
+**Spaced repetition for ideas — works with any local agent workspace.**
 
 MindFeed is a self-hosted spaced repetition app designed not for memorization, but for **idea integration**. It resurfaces your best thinking at increasing intervals so insights connect with new experiences over time.
 
-Your OpenClaw agent generates review cards from your conversations, notes, and content — then prompts you to review them at optimal intervals.
+Your agent — Hermes, OpenClaw, or another CLI assistant — can generate review cards from your conversations, notes, and content, then prompt you to review them at optimal intervals.
 
 ![MindFeed Screenshot](assets/screenshot.png)
 
@@ -18,26 +18,29 @@ Your OpenClaw agent generates review cards from your conversations, notes, and c
 - 🔄 **Rating system** — Again / Hard / Good / Easy adjusts future intervals
 - 💾 **State persists** — review progress saved server-side, survives refreshes
 
-## Quick Install (OpenClaw)
+## Quick Install
 
-### Option 1: ClawHub (coming soon)
+Clone wherever your agent keeps local apps/skills. Examples:
+
 ```bash
-npx clawhub install mindfeed
+# Hermes/default local workspace
+mkdir -p ~/github_repos
+git clone https://github.com/humanitylabs-org/mindfeed.git ~/github_repos/mindfeed
+cd ~/github_repos/mindfeed
+
+# OpenClaw skill workspace
+git clone https://github.com/humanitylabs-org/mindfeed.git ~/.openclaw/skills/mindfeed
+cd ~/.openclaw/skills/mindfeed
 ```
 
-### Option 2: Git clone
-```bash
-git clone https://github.com/humanitylabs-org/vault-review.git ~/.openclaw/skills/mindfeed
-```
-
-Your agent will auto-detect the skill on next session.
+Your agent can use the repo/skill path directly on its next session.
 
 ## Setup
 
 ### 1. Start the server
 
 ```bash
-python3 ~/.openclaw/skills/mindfeed/scripts/server.py --port 8787 --base-path /mindfeed
+python3 scripts/server.py --port 8787 --base-path /mindfeed
 ```
 
 You should see:
@@ -76,7 +79,7 @@ If you want to access MindFeed from your phone when away from home:
 
 ## How Your Agent Uses It
 
-Once installed, your OpenClaw agent can:
+Once installed, your agent can:
 
 ### Add cards from conversations
 Tell your agent: *"Add this to my MindFeed"* or *"I want to remember this idea"*
@@ -136,7 +139,7 @@ PWA note:
 - This lets `/mindfeed`, `/bookcompressor`, etc. install as separate PWAs on the same domain.
 
 ### Run as a background service (macOS)
-Create a LaunchAgent for auto-start — ask your OpenClaw agent to set this up for you.
+Create a LaunchAgent for auto-start — ask your agent to set this up for you.
 
 ## Contributing
 
@@ -146,7 +149,7 @@ Found a bug? Want to improve the UI? PRs welcome!
 2. Make your changes
 3. Submit a PR
 
-Your OpenClaw agent can even do this for you — just tell it what to fix and ask it to open a PR.
+Your agent can even do this for you — just tell it what to fix and ask it to open a PR.
 
 ## License
 
@@ -154,4 +157,4 @@ MIT
 
 ---
 
-Built by [Humanity Labs](https://github.com/humanitylabs-org) • Powered by [OpenClaw](https://openclaw.ai)
+Built by [Humanity Labs](https://github.com/humanitylabs-org) • Agent-agnostic self-hosted PWA
