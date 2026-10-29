@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" data-app="mindfeed">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0a14">
+<title>MindFeed</title>
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<script>if (window.parent !== window) document.documentElement.setAttribute('data-wz-hosted', '');</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div class="brand"><span class="glyph" aria-hidden="true">◈</span><b>MindFeed</b></div>
+    <div class="prog" id="prog" aria-live="polite"></div>
+  </header>
+
+  <section class="stage" id="stage" aria-live="polite"></section>
+
+  <nav class="scale" id="scale" aria-label="How much does this resonate?">
+    <button type="button" data-rate="1"><i>✕</i>Not for me</button>
+    <button type="button" data-rate="2"><i>○</i>Not so much</button>
+    <button type="button" data-rate="3"><i>◐</i>Resonant</button>
+    <button type="button" data-rate="4"><i>●</i>On point</button>
+  </nav>
+
+  <section class="done" id="done" hidden>
+    <div class="done-mark" aria-hidden="true">◈</div>
+    <h2 id="doneH">Three for today</h2>
+    <p id="doneP"></p>
+    <ol class="recap" id="recap"></ol>
+    <button type="button" class="primary" id="more">Keep going</button>
+    <p class="pool" id="pool"></p>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<script src="app.js"></script>
+</body>
+</html>
