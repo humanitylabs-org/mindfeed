@@ -129,7 +129,7 @@ let origin, activePage;
         await press(settings.locator(`[data-skinpick="${skin}"]:visible`));
         await p.waitForFunction(skin => document.documentElement.dataset.skin === skin && !!document.querySelector(`#settingsBody [data-skinpick="${skin}"][aria-pressed="true"]:not(:disabled)`) && !document.querySelector('#settingsBody [aria-busy="true"]') && !window.WosExperience?.state.busy, skin);
         await press(p.getByRole('button', { name: 'Close settings', exact: true }));
-        await settings.waitFor({ state: 'hidden' }); await settled(p);
+        await p.waitForFunction(() => document.documentElement.dataset.shell === 'phone' ? !document.querySelector('#settings').classList.contains('open') && document.querySelector('.device')?.dataset.sheet !== 'settings' : document.querySelector('#dsettings').hidden); await settled(p);
         await fr.waitForFunction(skin => document.documentElement.dataset.skin === skin && WizardApp.theme.get().skin === skin, skin);
         const after = await fr.evaluate(() => ({ retained: qaDocumentIdentity === 'appearance-retained', origin: performance.timeOrigin, card: document.querySelector('.card').dataset.id, text: getComputedStyle(document.documentElement).getPropertyValue('--wz-text').trim() }));
         check(`${mode} ${skin} live switch retains document/card`, after.retained && after.origin === before.origin && after.card === 'qa-4' && await fr.locator('#stage').isVisible());
