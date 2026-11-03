@@ -58,6 +58,7 @@ let origin, activePage;
   await new Promise(r => server.listen(0, '127.0.0.1', r)); origin = `http://127.0.0.1:${server.address().port}`;
   const b = await chromium.launch({ headless: true });
   try {
+    const appearanceCases = [];
     for (const mobile of [true, false]) {
       reset(); const mode = mobile ? 'phone' : 'desktop';
       const ctx = await b.newContext({ viewport: mobile ? { width: 412, height: 892 } : { width: 1440, height: 1000 }, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: 1 });
@@ -82,18 +83,8 @@ let origin, activePage;
       await summary(fr, `${mode} checkpoint exactly after third`);
       await shot(p, mode + '-nebula-third-checkpoint');
       await press(fr.locator('#more')); await shown(fr, 'qa-4', `${mode} Keep going opens fourth directly`);
-      await p.evaluate(() => WizCore.deeplink.route(location.pathname + '?view=appearance'));
-      await press(p.locator('[data-skinfamily="wizard"]:visible'));
-      await press(p.locator('[data-skinpick="signal"]:visible'));
-      await p.waitForFunction(() => document.documentElement.dataset.skin === 'signal' && !!document.querySelector('[data-skinpick="signal"][aria-pressed="true"]:not(:disabled)'));
-      await press(p.getByRole('button', {name:'Close settings', exact:true}));
-      await settled(p);
-      await fr.waitForFunction(() => document.documentElement.dataset.skin === 'signal');
-      check(`${mode} live skin change retains document/card`, await fr.evaluate(() => qaDocumentIdentity === 'retained' && document.querySelector('.card').dataset.id === 'qa-4'));
-      check(`${mode} Signal token transport`, await fr.evaluate(() => !!document.documentElement.style.getPropertyValue('--wz-text') && WizardApp.theme.get().skin === 'signal'));
-      await shot(p, mode + '-signal-fourth-continuing');
       for (let i = 4; i <= 7; i++) { await press(fr.locator(`[data-rate="${i % 4 + 1}"]`)); await shown(fr, `qa-${i + 1}`, `${mode} finishing ${i} auto-opens ${i + 1}, no checkpoint`); }
-      await shot(p, mode + '-signal-eighth-uninterrupted');
+      await shot(p, mode + '-nebula-eighth-uninterrupted');
       await fr.evaluate(() => location.reload()); await shown(fr, 'qa-8', `${mode} reload resumes eighth`); await press(fr.locator('[data-rate="3"]')); await shown(fr, 'qa-9', `${mode} reload preserves uninterrupted choice`);
       await press(fr.locator('#stop')); await summary(fr, `${mode} Stop returns to recap`);
       await fr.evaluate(() => location.reload()); await summary(fr, `${mode} stopped reload stays stopped`);
@@ -108,7 +99,8 @@ let origin, activePage;
       for (let i = 1; i <= 3; i++) { await shown(fr, `qa-${i}`, `${mode} fresh morning card ${i}`); await press(fr.locator('[data-rate="3"]')); }
       await summary(fr, `${mode} fresh morning gets checkpoint again`);
       check(`${mode} same app remains open`, fr.url() === identity);
-      await ctx.close();
+      receipt.trace.push({ phase: `${mode} progression complete` });
+      appearanceCases.push({ ctx, p, fr, mode, model: M });
     }
     reset(2); const ctx = await b.newContext({ viewport: { width: 412, height: 892 } }); const p = await ctx.newPage(); activePage = p; await p.goto(origin + '/mindfeed/');
     await shown(p, 'qa-1', 'standalone begins with dark fallback');
@@ -116,6 +108,37 @@ let origin, activePage;
     await shot(p, 'standalone-dark-fallback');
     await press(p.locator('[data-rate="3"]')); await shown(p, 'qa-2', 'short pool second card automatic'); await press(p.locator('[data-rate="1"]')); await summary(p, 'short pool genuine exhaustion before goal');
     check('short pool no Keep going', await p.locator('#more').isHidden()); await ctx.close();
+    receipt.trace.push({ phase: 'standalone progression complete' });
+    // All card cases in every viewport finish before optional Settings navigation.
+    for (const { ctx, p, fr, mode, model } of appearanceCases) {
+      M = model; activePage = p;
+      check(`${mode} appearance follows full progression matrix`, ['phone progression complete', 'desktop progression complete', 'standalone progression complete'].every(phase => receipt.trace.some(x => x.phase === phase)));
+      receipt.trace.push({ phase: `${mode} appearance start` });
+      await press(fr.locator('#more')); await shown(fr, 'qa-4', `${mode} appearance retains continuing fourth`);
+      const before = await fr.evaluate(() => { window.qaDocumentIdentity = 'appearance-retained'; return { origin: performance.timeOrigin, text: getComputedStyle(document.documentElement).getPropertyValue('--wz-text').trim() }; });
+      for (const skin of ['signal', 'nebula']) {
+        // Appearance is a category, NOT a deep-link feature in this pinned shell.
+        check(`${mode} Settings deep link accepted`, await p.evaluate(() => WizCore.deeplink.route(location.pathname + '?view=settings')));
+        const settings = p.locator('#settingsBody:visible');
+        await press(settings.locator('[data-st-page="appearance"]:visible'));
+        await settings.locator('[data-settings-feature="look"]:visible').waitFor();
+        check(`${mode} real Appearance category mounted`, await settings.getAttribute('data-settings-page') === 'appearance');
+        const family = await p.evaluate(skin => WosSkin.familyOf(skin), skin);
+        await press(settings.locator(`[data-skinfamily="${family}"]:visible`));
+        await p.waitForFunction(family => !!document.querySelector(`#settingsBody[data-settings-page="appearance"] [data-skinfamily="${family}"][aria-pressed="true"]:not(:disabled)`) && !document.querySelector('#settingsBody [aria-busy="true"]') && !window.WosExperience?.state.busy, family);
+        await press(settings.locator(`[data-skinpick="${skin}"]:visible`));
+        await p.waitForFunction(skin => document.documentElement.dataset.skin === skin && !!document.querySelector(`#settingsBody [data-skinpick="${skin}"][aria-pressed="true"]:not(:disabled)`) && !document.querySelector('#settingsBody [aria-busy="true"]') && !window.WosExperience?.state.busy, skin);
+        await press(p.getByRole('button', { name: 'Close settings', exact: true }));
+        await settings.waitFor({ state: 'hidden' }); await settled(p);
+        await fr.waitForFunction(skin => document.documentElement.dataset.skin === skin && WizardApp.theme.get().skin === skin, skin);
+        const after = await fr.evaluate(() => ({ retained: qaDocumentIdentity === 'appearance-retained', origin: performance.timeOrigin, card: document.querySelector('.card').dataset.id, text: getComputedStyle(document.documentElement).getPropertyValue('--wz-text').trim() }));
+        check(`${mode} ${skin} live switch retains document/card`, after.retained && after.origin === before.origin && after.card === 'qa-4' && await fr.locator('#stage').isVisible());
+        check(`${mode} ${skin} token transport`, !!after.text && (skin === 'signal' ? after.text !== before.text : after.text === before.text));
+        await shot(p, `${mode}-${skin}-fourth-continuing`);
+      }
+      await ctx.close();
+    }
+    assert.deepEqual(receipt.trace.filter(x => x.phase).map(x => x.phase), ['phone progression complete', 'desktop progression complete', 'standalone progression complete', 'phone appearance start', 'desktop appearance start']);
     check('no page errors', receipt.errors.length === 0);
     receipt.pass = true;
   } catch (e) {

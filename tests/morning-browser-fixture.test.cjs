@@ -11,6 +11,24 @@ test('established-owner model fixture passes the pinned real Welcome predicate; 
   assert.ok(harness.includes("localStorage.setItem('wos.welcome.v1', 'done')"));
   assert.ok(harness.includes("WosWelcome.log.some(x => x.startsWith('boot:')) && !WosWelcome.active"));
 });
+test('pinned Settings route opens registered features, not the Appearance category id', () => {
+  const sandbox = { window: { addEventListener() {} }, document: { baseURI: 'http://fixture/wizard-os-home/' }, location: new URL('http://fixture/wizard-os-home/'), URL };
+  vm.runInNewContext(fs.readFileSync(path.join(process.env.QA_SHELL_ROOT, 'web/core/settings.js'), 'utf8'), sandbox);
+  vm.runInNewContext(fs.readFileSync(path.join(process.env.QA_SHELL_ROOT, 'web/core/deeplink.js'), 'utf8'), sandbox);
+  const calls = [], open = (...args) => calls.push(args), route = sandbox.window.WosSettings.route;
+  const deeplink = sandbox.window.WizCore.deeplink;
+  deeplink.handle({ view: id => route(id, open) });
+  assert.equal(deeplink.route('/wizard-os-home/?view=appearance'), false); assert.deepEqual(calls, []);
+  assert.equal(deeplink.route('/wizard-os-home/?view=settings'), true); assert.deepEqual(calls.pop(), []);
+  assert.equal(route('appearance', open), false); assert.deepEqual(calls, []);
+  assert.equal(route('settings', open), true); assert.deepEqual(calls.pop(), []);
+  for (const id of ['look', 'skin']) { assert.equal(route(id, open), true); assert.deepEqual(calls.pop(), ['look']); }
+  assert.ok(harness.includes("'?view=settings'"));
+  assert.ok(harness.includes('[data-st-page="appearance"]:visible'));
+  assert.ok(!harness.includes('?view=appearance'));
+  const skins = fs.readFileSync(path.join(process.env.QA_SHELL_ROOT, 'web/core/skins.js'), 'utf8');
+  assert.match(skins, /id: 'wizard'[^\n]+palettes: \['nebula', 'grove', 'tide', 'ember', 'signal'\]/);
+});
 function sample({animation, frameAnimation, x=0, hit=true, loading=false, hidden=false}={}) {
   const f = {tagName:'IFRAME',className:'appframe',parentElement:null,getBoundingClientRect:()=>({x,y:0,left:x,top:0,right:x+400,bottom:800,width:400,height:800}),closest:()=>loading,contentDocument:{visibilityState:hidden?'hidden':'visible'}};
   f.contentDocument.getAnimations = () => frameAnimation ? [{playState:frameAnimation,playbackRate:1,currentTime:30,effect:{target:{className:'card'},getComputedTiming:()=>({endTime:280})}}] : [];
