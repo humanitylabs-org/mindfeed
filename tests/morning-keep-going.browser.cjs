@@ -50,7 +50,7 @@ const server = http.createServer(async (req, res) => {
 function check(name, value) { receipt.checks.push({ name, pass: !!value }); assert.ok(value, name); console.log('PASS', name); }
 async function shown(fr, id, label) { await fr.waitForFunction(id => !document.querySelector('#stage').hidden && document.querySelector('#stage .card')?.dataset.id === id, id); receipt.trace.push({ action: label, visible: id }); check(label, true); }
 async function summary(fr, label) { await fr.waitForFunction(() => !document.querySelector('#done').hidden); receipt.trace.push({ action: label, visible: 'checkpoint', rated: view().rated }); check(label, true); }
-const frameSelector = 'iframe.appframe[src*="/mindfeed/"]';
+const frameSelector = 'iframe[src*="/mindfeed/"]';
 async function settled(p) { if (p.url().includes('/wizard-os-home/')) receipt.trace.push({ action: 'shell settled', sample: await waitShell(p, frameSelector) }); }
 async function shot(p, name) { await settled(p); const f = path.join(OUT, name + '.png'); await p.screenshot({ path: f }); receipt.screenshots.push(f); await settled(p); }
 let origin, activePage;
