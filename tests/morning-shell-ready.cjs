@@ -6,7 +6,7 @@ function sampleShell(selector) {
   const f = document.querySelector(selector); if (!f) return { ready: false, reason: 'missing frame' };
   const chain = []; for (let n = f; n; n = n.parentElement) chain.push(n);
   const r = f.getBoundingClientRect(), styles = chain.map(n => { const c = getComputedStyle(n); return { tag: n.tagName, cls: n.className, opacity: c.opacity, transform: c.transform, visibility: c.visibility, filter: c.filter }; });
-  const animations = document.getAnimations().filter(a => chain.includes(a.effect?.target)).map(a => ({ state: a.playState, rate: a.playbackRate, current: a.currentTime, end: a.effect.getComputedTiming().endTime }));
+  const animations = [...document.getAnimations().filter(a => chain.includes(a.effect?.target)), ...(f.contentDocument?.getAnimations?.() || [])].map(a => ({ target: a.effect?.target?.className, state: a.playState, rate: a.playbackRate, current: a.currentTime, end: a.effect.getComputedTiming().endTime }));
   const visible = r.width > 0 && r.height > 0 && r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1;
   const hit = document.elementFromPoint(r.left + r.width/2, r.top + r.height/2) === f;
   const clear = styles.every(s => Number(s.opacity) >= .999 && s.visibility === 'visible' && s.filter === 'none');
