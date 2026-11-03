@@ -128,8 +128,19 @@ let origin, activePage;
         await p.waitForFunction(family => !!document.querySelector(`#settingsBody[data-settings-page="appearance"] [data-skinfamily="${family}"][aria-pressed="true"]:not(:disabled)`) && !document.querySelector('#settingsBody [aria-busy="true"]') && !window.WosExperience?.state.busy, family);
         await press(settings.locator(`[data-skinpick="${skin}"]:visible`));
         await p.waitForFunction(skin => document.documentElement.dataset.skin === skin && !!document.querySelector(`#settingsBody [data-skinpick="${skin}"][aria-pressed="true"]:not(:disabled)`) && !document.querySelector('#settingsBody [aria-busy="true"]') && !window.WosExperience?.state.busy, skin);
-        await press(p.getByRole('button', { name: 'Close settings', exact: true }));
-        await p.waitForFunction(() => document.documentElement.dataset.shell === 'phone' ? !document.querySelector('#settings').classList.contains('open') && document.querySelector('.device')?.dataset.sheet !== 'settings' : document.querySelector('#dsettings').hidden); await settled(p);
+        if (mode === 'phone') {
+          await press(p.getByRole('button', { name: 'Close settings', exact: true }));
+          await p.waitForFunction(() => !document.querySelector('#settings').classList.contains('open') && document.querySelector('.device')?.dataset.sheet !== 'settings');
+        } else {
+          // Pinned desktop hosts Settings in a normal window on the active desk.
+          const settingsWindow = p.locator('.win[data-win]').filter({ has: p.locator('.settings-host #dsettings') });
+          const settingsId = await settingsWindow.getAttribute('data-win');
+          check(`${mode} ${skin} Settings window matches runtime`, !!settingsId && await p.evaluate(id => window.__wux.wins[id]?.app === 'settings', settingsId));
+          await press(settingsWindow.getByRole('button', { name: 'Close window', exact: true }));
+          await p.waitForFunction(id => !window.__wux.wins[id] && !Object.values(window.__wux.wins).some(w => w.app === 'settings') && !document.querySelector(`.win[data-win="${id}"]`) && document.querySelector('#dsettings').hidden && document.querySelector('#dsettings').parentNode === document.body, settingsId);
+          check(`${mode} ${skin} Settings window closed and panel parked`, true);
+        }
+        await settled(p);
         await fr.waitForFunction(skin => document.documentElement.dataset.skin === skin && WizardApp.theme.get().skin === skin, skin);
         const after = await fr.evaluate(() => ({ retained: qaDocumentIdentity === 'appearance-retained', origin: performance.timeOrigin, card: document.querySelector('.card').dataset.id, text: getComputedStyle(document.documentElement).getPropertyValue('--wz-text').trim() }));
         check(`${mode} ${skin} live switch retains document/card`, after.retained && after.origin === before.origin && after.card === 'qa-4' && await fr.locator('#stage').isVisible());
