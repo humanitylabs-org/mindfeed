@@ -73,7 +73,7 @@ let origin, activePage;
       check(`${mode} actual shell and established-owner Welcome settled`, await p.evaluate(m => document.documentElement.dataset.shell === (m ? 'phone' : 'desktop') && !WosWelcome.active, mobile));
       await p.evaluate(m => { const a = WizCore.apps(m ? 'mobile' : 'desktop').APP.mindfeed; (m ? __wos : __wux).openApp(a); }, mobile);
       await p.waitForFunction(() => [...document.querySelectorAll('iframe')].some(f => f.src.includes('/mindfeed/') && f.getBoundingClientRect().height > 0));
-      const fr = p.frames().find(f => f.url().includes('/mindfeed/')); assert.ok(fr);
+      const fr = await (await p.locator(frameSelector).elementHandle()).contentFrame(); assert.ok(fr); await fr.waitForURL(u => u.pathname.startsWith('/mindfeed/'));
       await fr.waitForFunction(() => window.WizardApp?.hosted);
       await settled(p);
       await fr.evaluate(() => { window.qaInputEvents = []; for (const type of ['pointerdown','pointerup','click']) document.addEventListener(type, e => qaInputEvents.push({ type, target: e.target.closest('button')?.outerHTML, trusted: e.isTrusted, pointer: e.pointerType }), true); });
