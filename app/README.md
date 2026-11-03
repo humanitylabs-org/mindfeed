@@ -11,6 +11,26 @@ A few ideas that resonated, every day. Do at least three cards; keep going if yo
 
 No memorisation, no Anki grind. The feed rotates across sources and domains so a day never becomes one thinker.
 
+## Morning flow
+
+Rating any of the first three cards advances directly to the next. After the third,
+there is one checkpoint. **Keep going** opens the fourth card and then advances
+card-to-card until you choose **Stop for now**, use Back, or exhaust eligible cards.
+All four existing ratings advance; this version has no separate Skip action.
+Re-rating a recap card returns to the recap without extending the feed.
+
+The continuation/stop choice survives reload in the same browser tab for that feed
+day (sessionStorage). Existing queued cards still resume. A new feed day resets the
+choice and gets the initial three-card checkpoint. No rating/scheduling API changed.
+
+Regression: `node --test tests/morning-keep-going-uninterrupted.test.cjs`.
+Browser acceptance: `QA_PLAYWRIGHT=<module> QA_SHELL_ROOT=<shell export> node tests/morning-keep-going.browser.cjs`.
+
+Reuse:
+- Skin: REUSE shared `WizardApp` Appearance transport and existing `--wz-*` roles.
+- Back: EXTEND the app's existing `WizardApp.back.register` callback with optional-run Stop.
+- Progression: EXTEND existing app-local `current`/rating/`api/more` state; no new platform capability.
+
 ## Run
 
 ```

@@ -4,7 +4,27 @@
   const API = location.pathname.replace(/\/[^/]*$/, '/') + 'api/';
   const framed = window.parent !== window;
   const LABEL = { 4: 'On point', 3: 'Resonant', 2: 'Not so much', 1: 'Not for me' };
-  let F = null, reopen = null, busy = false;
+  let F = null, reopen = null, busy = false, continuing = false, stopped = false;
+
+  // Keep going is a session/day choice, not permission to ask again after every card.
+  // Reload resumes the choice; a fresh morning still starts with the three-card goal.
+  const sessionKey = 'mindfeed.continuation';
+  function setContinuation(mode) {
+    continuing = mode === 'continue'; stopped = mode === 'stop';
+    try { sessionStorage.setItem(sessionKey, JSON.stringify({ day: F.day, mode })); } catch (e) {}
+  }
+  function restoreContinuation() {
+    let saved;
+    try { saved = JSON.parse(sessionStorage.getItem(sessionKey)); } catch (e) {}
+    continuing = saved?.day === F.day && saved.mode === 'continue';
+    stopped = saved?.day === F.day && saved.mode === 'stop';
+  }
+  async function advance(saved = false) {
+    if (continuing && !reopen && !F.cards.some(c => !c.rating) && F.more_available > 0) {
+      try { F = await api('more', {}); }
+      catch (e) { toast(saved ? 'Saved. Couldn’t fetch another · tap Keep going to retry' : 'Couldn’t fetch another'); }
+    }
+  }
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   async function api(path, body) {
@@ -45,6 +65,7 @@
 
   function current() {
     if (reopen) return F.cards.find(c => c.id === reopen) || null;
+    if (stopped) return null;
     return F.cards.find(c => !c.rating) || null;
   }
 
@@ -53,6 +74,7 @@
     $('#prog').innerHTML = `<span class="dots">${Array.from({ length: n }, (_, i) => `<i class="${F.cards[i]?.rating ? 'on' : ''}${F.cards[i] && F.cards[i].id === current()?.id ? ' cur' : ''}${i >= goal ? ' extra' : ''}"></i>`).join('')}</span><span class="cnt">${F.rated < goal ? `${F.rated} of ${goal}` : `${F.rated} today`}</span>`;
     const c = current();
     $('#done').hidden = !!c; $('#stage').hidden = !c; $('#scale').hidden = !c;
+    $('#stop').hidden = !c || !continuing || !!reopen;
     if (c) {
       $('#stage').innerHTML = cardHTML(c);
       $('#stage').scrollTop = 0;
@@ -61,7 +83,7 @@
       $('#doneH').textContent = F.rated >= goal ? (F.rated === goal ? 'Three for today' : `${F.rated} for today`) : 'That’s everything for now';
       $('#doneP').textContent = F.rated >= goal ? 'Done. Keep going if you feel like it.' : 'Save more lines in Wisdom or with Philosopher and they’ll show up here.';
       $('#recap').innerHTML = F.cards.filter(c => c.rating).map(c => { const r = render(c); const t = r.title || (c.text || '').replace(/[#>*\[\]]/g, '').trim().slice(0, 90); return `<li><button type="button" data-reopen="${esc(c.id)}"><span class="t">${esc(t)}${t.length >= 90 ? '…' : ''}</span><span class="r r${c.rating}">${esc(LABEL[c.rating])}</span></button></li>`; }).join('');
-      $('#more').hidden = !(F.more_available > 0);
+      $('#more').hidden = !(F.more_available > 0 || F.cards.some(c => !c.rating));
       const src = Object.entries(F.pool.by_source || {}).map(([k, v]) => `${v} ${k}`).join(' · ');
       $('#pool').textContent = `${F.pool.total} cards in your feed${src ? ` (${src})` : ''}${F.pool.retired ? ` · ${F.pool.retired} retired` : ''}`;
     }
@@ -73,7 +95,7 @@
   }
 
   async function load() {
-    try { F = await api('today'); paint(); tell(); }
+    try { F = await api('today'); restoreContinuation(); await advance(); paint(); tell(); }
     catch (e) { $('#stage').innerHTML = '<p class="err">Can’t reach MindFeed right now.</p>'; $('#scale').hidden = true; }
   }
 
@@ -86,7 +108,9 @@
       const wasDone = F.done;
       try {
         const [d] = await Promise.all([api('rate', { id: c.id, r: +rb.dataset.rate }), new Promise(r => setTimeout(r, 260))]);
-        F = d; if (reopen) leaveReopen();
+        F = d;
+        if (reopen) leaveReopen();
+        else await advance(true);
         paint(); tell();
         if (!wasDone && F.done) toast('Three done ✓');
       } catch (err) { card?.classList.remove('out'); toast('Not saved · try again'); }
@@ -95,22 +119,29 @@
     }
     const ro = e.target.closest('[data-reopen]');
     if (ro) { enterReopen(ro.dataset.reopen); return; }
-    if (e.target.closest('#more')) {
-      try { F = await api('more', {}); paint(); } catch (err) { toast('Couldn’t fetch another'); }
+    if (e.target.closest('#stop')) { stop(); return; }
+    if (e.target.closest('#more') && !busy) {
+      busy = true;
+      const button = $('#more'); button.disabled = true; button.textContent = 'Loading…';
+      setContinuation('continue');
+      try { await advance(); paint(); tell(); }
+      finally { busy = false; button.disabled = false; button.textContent = 'Keep going'; }
     }
   });
 
-  // Back: re-rating an earlier card is the only nested view. Back returns to the summary; at the root it stays put.
+  function stop() { setContinuation('stop'); paint(); }
+  // Back leaves a re-rating first, then stops an optional run without leaving the app.
   let lastRootBack = 0;
   function enterReopen(id) { reopen = id; if (!framed) history.pushState({ v: 'reopen' }, ''); paint(); }
   function leaveReopen() { if (!reopen) return; reopen = null; if (!framed && history.state?.v === 'reopen') history.back(); }
   if (framed) {
     const s = document.createElement('script'); s.src = '/wizard-os-home/core/app-client.js';
-    s.onload = () => { try { WizardApp.ready({ name: 'MindFeed' }); WizardApp.back.register({ canGoBack: () => !!reopen, back: () => { if (!reopen) return false; reopen = null; paint(); return true; } }); } catch (e) {} };
+    s.onload = () => { try { WizardApp.ready({ name: 'MindFeed' }); WizardApp.back.register({ canGoBack: () => !!reopen || continuing, back: () => { if (reopen) { reopen = null; paint(); return true; } if (continuing) { stop(); return true; } return false; } }); } catch (e) {} };
     document.head.appendChild(s);
   } else {
     history.replaceState({ v: 'guard' }, ''); history.pushState({ v: 'root' }, '');
     addEventListener('popstate', e => {
+      if (!reopen && continuing) { stop(); history.pushState({ v: 'root' }, ''); return; }
       const v = e.state?.v;
       if (v === 'root') { if (reopen) { reopen = null; paint(); } return; }
       if (v === 'guard' || !v) {
