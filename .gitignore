@@ -1,2 +1,5 @@
 cards.json
 review-state.json
+*.local
+data/
+__pycache__/

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="__MINDFEED_BASE_PATH__/manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="__MINDFEED_BASE_PATH__/icon-192.png">
+<link rel="apple-touch-icon" href="__MINDFEED_BASE_PATH__/apple-touch-icon.png">
+<meta name="application-name" content="MindFeed">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MindFeed">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindFeed</title>
+<script>
+  window.__MINDFEED_BASE_PATH = "__MINDFEED_BASE_PATH__";
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { overflow-x: hidden; scrollbar-gutter: stable; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px;
+    overflow-x: hidden;
+  }
+  h1 { font-size: 1.4em; color: #8b5cf6; margin-bottom: 20px; }
+  .subtitle { color: #666; font-size: 0.85em; margin-bottom: 20px; }
+  .stats {
+    display: flex; gap: 20px; margin-bottom: 20px;
+    font-size: 0.85em; color: #888; flex-wrap: wrap; justify-content: center;
+  }
+  .stats span { display: flex; align-items: center; gap: 4px; }
+  .stats .new { color: #3b82f6; }
+  .stats .review { color: #f59e0b; }
+  .stats .done { color: #22c55e; }
+  .stats .upcoming { color: #555; }
+
+  .card-container {
+    width: 100%; max-width: 750px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .card {
+    background: #16161e;
+    border: 1px solid #2a2a3a;
+    border-radius: 16px;
+    padding: 24px 16px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    min-height: 200px;
+  }
+  /* card-header removed — metadata now in footer */
+  .card-source {
+    font-size: 1.05em;
+    color: #ccc;
+    margin: 4px 0 20px 0;
+    font-weight: 500;
+  }
+  .card-source a {
+    color: #d4d4d4;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(212, 212, 212, 0.3);
+  }
+  .card-source a:hover { border-bottom-color: #d4d4d4; }
+  .card-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 24px; padding-top: 16px;
+    border-top: 1px solid #2a2a3a;
+  }
+  .card-footer .card-domain {
+    font-size: 0.75em; color: #8b5cf6;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .card-footer .card-id {
+    font-size: 0.7em; color: #444;
+    font-family: monospace;
+  }
+  .card-content {
+    line-height: 1.75;
+    font-size: 0.95em;
+  }
+  .card-content h1 { font-size: 1.5em; color: #fff; margin-bottom: 16px; line-height: 1.3; }
+  .card-content h2 { font-size: 1.1em; color: #c4b5fd; margin: 20px 0 10px 0; }
+  .card-content h3 { font-size: 0.95em; color: #a78bfa; margin: 16px 0 8px 0; }
+  .card-content p { margin: 10px 0; }
+  .card-content ul, .card-content ol { padding-left: 24px; margin: 8px 0; }
+  .card-content li { margin: 6px 0; }
+  .card-content strong { color: #d4d4d4; }
+  .card-content em { color: #c4b5fd; }
+  .card-content hr { border: none; border-top: 1px solid #2a2a3a; margin: 20px 0; }
+  .card-content blockquote {
+    border-left: 3px solid #8b5cf6;
+    padding-left: 16px; margin: 12px 0;
+    color: #aaa; font-style: italic;
+  }
+  .card-content code { background: #1e1e2e; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+
+  .buttons {
+    display: flex; gap: 10px; width: 100%; max-width: 750px;
+    justify-content: center; flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 16px 0;
+  }
+  .btn {
+    padding: 12px 24px; border: none; border-radius: 10px;
+    font-size: 0.95em; font-weight: 600; cursor: pointer;
+    transition: all 0.2s; min-width: 90px;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-again { background: #dc2626; color: white; }
+  .btn-hard { background: #f59e0b; color: #000; }
+  .btn-good { background: #22c55e; color: #000; }
+  .btn-easy { background: #3b82f6; color: white; }
+  .btn span { display: block; font-size: 0.7em; font-weight: 400; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .btn-hard span, .btn-good span { color: rgba(0,0,0,0.5); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: #666; }
+  .empty-state .emoji { font-size: 3em; margin-bottom: 16px; }
+  .empty-state h2 { color: #22c55e; margin-bottom: 8px; }
+
+  .progress {
+    width: 100%; max-width: 750px; height: 4px;
+    background: #1a1a2a; border-radius: 2px;
+    margin-bottom: 20px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+    border-radius: 2px; transition: width 0.5s;
+  }
+  .deck-info {
+    margin-top: 10px; font-size: 0.8em; color: #444; text-align: center;
+    padding-bottom: 80px;
+  }
+  .error { color: #dc2626; text-align: center; padding: 20px; }
+</style>
+</head>
+<body>
+
+<h1>MindFeed</h1>
+
+<div class="stats" id="stats"></div>
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="card-container" id="cardContainer">
+  <div class="empty-state"><p>Loading cards...</p></div>
+</div>
+<div class="buttons" id="buttons" style="display:none">
+  <button class="btn btn-again" onclick="rate(0)">Again<span>1m</span></button>
+  <button class="btn btn-hard" onclick="rate(1)">Hard<span id="hardInt"></span></button>
+  <button class="btn btn-good" onclick="rate(2)">Good<span id="goodInt"></span></button>
+  <button class="btn btn-easy" onclick="rate(3)">Easy<span id="easyInt"></span></button>
+</div>
+
+<div class="deck-info" id="deckInfo"></div>
+
+<script>
+const BASE_PATH = (() => {
+  const raw = (window.__MINDFEED_BASE_PATH || '').trim();
+  if (!raw || raw === '/') return '';
+  const clean = raw.replace(/^\/+|\/+$/g, '');
+  return clean ? '/' + clean : '';
+})();
+
+function appPath(path) {
+  if (!path.startsWith('/')) path = '/' + path;
+  return `${BASE_PATH}${path}`;
+}
+
+// ---- Markdown to HTML ----
+function md(text) {
+  text = text.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2');
+  text = text.replace(/\[\[([^\]]+)\]\]/g, '$1');
+  const lines = text.split('\n');
+  let html = '', inList = false, listType = '';
+  function closeList() { if(inList){html+=listType==='ol'?'</ol>':'</ul>';inList=false;} }
+  // Lookahead helper: find next non-empty line
+  function nextNonEmpty(i) { for(let j=i+1;j<lines.length;j++){if(lines[j].trim()!=='')return lines[j];} return ''; }
+  for (let i=0; i<lines.length; i++) {
+    const line = lines[i];
+    if (line.match(/^\*Source:|^\*Date:|^\*Emerged from|^\*Processed:/)) continue;
+    if (line.match(/^### /)) { closeList(); html+='<h3>'+il(line.slice(4))+'</h3>'; continue; }
+    if (line.match(/^## /)) { closeList(); html+='<h2>'+il(line.slice(3))+'</h2>'; continue; }
+    if (line.match(/^# /)) { closeList(); html+='<h1>'+il(line.slice(2))+'</h1>'; continue; }
+    if (line.match(/^---\s*$/)) { closeList(); html+='<hr>'; continue; }
+    if (line.match(/^>\s?/)) { closeList(); html+='<blockquote>'+il(line.replace(/^>\s?/,''))+'</blockquote>'; continue; }
+    if (line.match(/^\d+\.\s/)) {
+      if(!inList||listType!=='ol'){closeList();html+='<ol>';inList=true;listType='ol';}
+      html+='<li>'+il(line.replace(/^\d+\.\s/,''))+'</li>'; continue;
+    }
+    if (line.match(/^[-*]\s/)) {
+      if(!inList||listType!=='ul'){closeList();html+='<ul>';inList=true;listType='ul';}
+      html+='<li>'+il(line.replace(/^[-*]\s/,''))+'</li>'; continue;
+    }
+    if (line.trim()==='') {
+      // Don't close list if next non-empty line continues the same list type
+      if (inList) {
+        const next = nextNonEmpty(i);
+        if ((listType==='ol' && next.match(/^\d+\.\s/)) || (listType==='ul' && next.match(/^[-*]\s/))) continue;
+      }
+      closeList(); continue;
+    }
+    closeList(); html+='<p>'+il(line)+'</p>';
+  }
+  closeList();
+  return html;
+}
+function il(t) {
+  t=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  t=t.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  t=t.replace(/`(.+?)`/g,'<code>$1</code>');
+  return t;
+}
+
+// ---- State (server file is single source of truth) ----
+let _state = {};
+
+function getState() { return _state; }
+
+async function loadState() {
+  try {
+    const resp = await fetch(appPath('/review-state.json?t=' + Date.now()), { cache: 'no-store' });
+    if (resp.ok) {
+      _state = await resp.json();
+      console.log('Loaded state:', Object.keys(_state).length, 'cards');
+    }
+  } catch(e) {
+    // File doesn't exist yet — start fresh
+    _state = {};
+  }
+}
+
+function saveState(state) {
+  _state = state;
+  fetch(appPath('/review-state.json'), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(state, null, 2)
+  }).then(r => {
+    if (!r.ok) console.error('Save failed:', r.status);
+    else console.log('State saved:', Object.keys(state).length, 'cards');
+  }).catch(e => console.error('Save error:', e));
+}
+
+// ---- Intervals (minutes) ----
+const INTERVALS = { 0: 1, 1: 10, 2: 1440, 3: 4320 };
+
+let allCards = [];
+let currentCard = null;
+let sessionQueue = [];
+let reviewed = 0;
+let totalDue = 0;
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+function getAvailableCards() {
+  const t = today();
+  return allCards.filter(c => !c.releaseDate || c.releaseDate <= t);
+}
+function getNewCards() {
+  const state = getState();
+  return getAvailableCards().filter(c => !state[c.id]);
+}
+function getDueReviewCards() {
+  const state = getState();
+  const now = Date.now();
+  return getAvailableCards().filter(c => {
+    const s = state[c.id];
+    return s && now >= s.due;
+  });
+}
+
+function buildQueue() {
+  // NEW CARDS FIRST (newest releaseDate first — fresh ideas take priority)
+  const newCards = getNewCards().sort((a,b) =>
+    (b.releaseDate||'').localeCompare(a.releaseDate||''));
+  // THEN DUE REVIEWS (oldest due first)
+  const state = getState();
+  const reviewCards = getDueReviewCards().sort((a,b) =>
+    (state[a.id]?.due||0) - (state[b.id]?.due||0));
+  return [...newCards, ...reviewCards];
+}
+
+function initSession() {
+  sessionQueue = buildQueue();
+  totalDue = sessionQueue.length;
+  reviewed = 0;
+  showNext();
+}
+
+async function showNext() {
+  updateStats();
+  const container = document.getElementById('cardContainer');
+  const buttons = document.getElementById('buttons');
+  const available = getAvailableCards();
+  const upcoming = allCards.length - available.length;
+
+  if (sessionQueue.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">✨</div>
+        <h2>All caught up!</h2>
+        <p>${reviewed > 0 ? `You reviewed ${reviewed} card${reviewed>1?'s':''}.` : 'No cards due right now.'}</p>
+        <p style="margin-top:12px;font-size:0.85em;color:#555">
+          ${available.length} available · ${upcoming} upcoming · ${getNewCards().length} new
+        </p>
+      </div>`;
+    buttons.style.display = 'none';
+    return;
+  }
+
+  currentCard = sessionQueue.shift();
+  const state = getState();
+  const isNew = !state[currentCard.id];
+
+  // Use inline content if present, otherwise fetch from vault file
+  let content = '';
+  if (currentCard.content) {
+    content = currentCard.content;
+  } else {
+    try {
+      const cardPath = currentCard.path.startsWith('/')
+        ? currentCard.path
+        : '/' + encodeURI(currentCard.path);
+      const resp = await fetch(appPath(cardPath));
+      if (resp.ok) {
+        content = await resp.text();
+      } else {
+        content = `# ${currentCard.title}\n\n*Could not load file: ${currentCard.path}*`;
+      }
+    } catch(e) {
+      content = `# ${currentCard.title}\n\n*Error loading: ${e.message}*`;
+    }
+  }
+
+  // Extract source line (e.g. "*From: [[Note Name]]*") and render separately
+  let sourceHtml = '';
+  const sourceMatch = content.match(/^\*(?:From|Related):\s*(.+?)\*\s*\n/);
+  if (sourceMatch) {
+    content = content.replace(sourceMatch[0], '');
+    // Convert [[wiki links]] to obsidian deep links using the card's path
+    // Cards with paths starting with uppercase 'James/' are in vault root, not Anaximander/
+    const cardPath = currentCard.path.startsWith('James/') ? currentCard.path : 'Anaximander/' + currentCard.path;
+    let sourceText = sourceMatch[1].replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_, file, label) => {
+      const encodedPath = encodeURIComponent(cardPath);
+      return `<a href="https://obsid.net/?vault=Thales&file=${encodedPath}" target="_blank">${label}</a>`;
+    });
+    sourceText = sourceText.replace(/\[\[([^\]]+)\]\]/g, (_, file) => {
+      const encodedPath = encodeURIComponent(cardPath);
+      return `<a href="https://obsid.net/?vault=Thales&file=${encodedPath}" target="_blank">${file}</a>`;
+    });
+    sourceHtml = `<div class="card-source">From: ${sourceText}</div>`;
+  }
+
+  container.innerHTML = `
+    <div class="card">
+      ${sourceHtml}
+      <div class="card-content">${md(content)}</div>
+      <div class="card-footer">
+        <div class="card-domain">${currentCard.domain}${isNew ? ' · <span style="color:#3b82f6">NEW</span>' : ''}</div>
+        <div class="card-id">${currentCard.id}</div>
+      </div>
+    </div>`;
+  buttons.style.display = 'flex';
+  updateIntervalLabels(currentCard);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function rate(quality) {
+  const state = getState();
+  const now = Date.now();
+  const prev = state[currentCard.id] || { interval: 0, ease: 2.5, reps: 0 };
+  let interval, ease;
+
+  if (quality === 0) {
+    interval = INTERVALS[0]; ease = Math.max(1.3, prev.ease - 0.2);
+    sessionQueue.splice(Math.min(3, sessionQueue.length), 0, currentCard);
+  } else if (quality === 1) {
+    interval = Math.max(INTERVALS[1], prev.interval * 1.2);
+    ease = Math.max(1.3, prev.ease - 0.15);
+  } else if (quality === 2) {
+    interval = prev.reps === 0 ? INTERVALS[2] : prev.interval * prev.ease;
+    ease = prev.ease;
+  } else {
+    interval = prev.reps === 0 ? INTERVALS[3] : prev.interval * prev.ease * 1.3;
+    ease = prev.ease + 0.15;
+  }
+
+  state[currentCard.id] = {
+    interval: Math.round(interval), ease,
+    reps: prev.reps + 1,
+    due: now + interval * 60 * 1000,
+    lastReview: now
+  };
+  saveState(state);
+  if (quality > 0) reviewed++;
+  showNext();
+}
+
+function updateStats() {
+  const newC = getNewCards().length;
+  const upcoming = allCards.length - getAvailableCards().length;
+  document.getElementById('stats').innerHTML = `
+    <span class="new">● ${newC} new</span>
+    <span class="review">● ${sessionQueue.length} due</span>
+    <span class="done">● ${reviewed} done</span>
+    ${upcoming > 0 ? `<span class="upcoming">● ${upcoming} upcoming</span>` : ''}
+  `;
+  const pct = totalDue > 0 ? ((reviewed / totalDue) * 100) : 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('deckInfo').textContent =
+    `${getAvailableCards().length} available · ${allCards.length} total`;
+}
+
+function updateIntervalLabels(card) {
+  const state = getState();
+  const prev = state[card.id] || { interval: 0, ease: 2.5, reps: 0 };
+  function fmt(m) { return m<60?Math.round(m)+'m':m<1440?Math.round(m/60)+'h':Math.round(m/1440)+'d'; }
+  document.getElementById('hardInt').textContent = fmt(Math.max(INTERVALS[1], prev.interval * 1.2));
+  document.getElementById('goodInt').textContent = fmt(prev.reps === 0 ? INTERVALS[2] : prev.interval * prev.ease);
+  document.getElementById('easyInt').textContent = fmt(prev.reps === 0 ? INTERVALS[3] : prev.interval * prev.ease * 1.3);
+}
+
+// ---- Init ----
+async function boot() {
+  await loadState();
+  try {
+    const resp = await fetch(appPath('/cards.json'));
+    allCards = await resp.json();
+    initSession();
+  } catch(err) {
+    document.getElementById('cardContainer').innerHTML =
+      `<div class="error">Error loading cards: ${err.message}</div>`;
+  }
+}
+boot();
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register(appPath('/sw.js'));
+}
+</script>
+</body>
+</html>

@@ -1,3 +1,5 @@
+> **Now a Wizard app:** see [`app/README.md`](app/README.md). The original Anki-style version lives in `legacy/`.
+
 # 🔮 MindFeed
 *by [Humanity Labs](https://humanitylabs.ai)*
 
