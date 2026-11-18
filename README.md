@@ -1,4 +1,4 @@
-> **Now a Wizard app:** see [`app/README.md`](app/README.md). The original Anki-style version lives in `legacy/`.
+> **Now a Wizard app:** see [`app/README.md`](app/README.md). The original Anki-style version lives in `scripts/server.py` and `assets/`.
 
 # 🔮 MindFeed
 *by [Humanity Labs](https://humanitylabs.ai)*

@@ -71,4 +71,4 @@ Browser POSTs must be same-origin or listed in `MINDFEED_ORIGINS`; local callers
 
 The day boundary follows Wizard's `settings.json` clock (`timezone`, `day_starts_at`), else `MINDFEED_TZ` at 06:00.
 
-`legacy/` holds the original Anki-style MindFeed for reference.
+The original Anki-style MindFeed is kept for reference in `scripts/server.py` and `assets/`.

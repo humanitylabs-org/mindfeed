@@ -30,6 +30,9 @@ PORT = int(os.environ.get("APP_PORT", "8787"))
 BASE = "/" + os.environ.get("APP_BASE_PATH", "/mindfeed").strip("/")
 DATA = Path(os.environ.get("MINDFEED_DATA", str(Path(__file__).parent.parent / "data")))
 WEB = (Path(__file__).parent / "web").resolve()
+# The UI files, listed once at start: requests pick from this map and never build a path from the URL.
+STATIC = {f.relative_to(WEB).as_posix(): (f, mimetypes.guess_type(f.name)[0] or "application/octet-stream")
+          for f in WEB.rglob("*") if f.is_file()}
 SETTINGS = Path(os.environ.get("WIZARD_SETTINGS", str(Path.home() / ".wizard-os/settings.json")))
 try:
     SOURCES = json.loads(os.environ.get("MINDFEED_SOURCES", "[]"))
@@ -115,11 +118,10 @@ class H(BaseHTTPRequestHandler):
             return self.json({"days": FEED.done_days(), "goal": 3})
         if p == "/api/cards":
             return self.json({"cards": FEED.library()})
-        rel = "index.html" if p == "/" else p.lstrip("/")
-        f = (WEB / rel).resolve()
-        if WEB not in f.parents or not f.is_file():
+        hit = STATIC.get("index.html" if p == "/" else p.lstrip("/"))
+        if not hit:
             return self.json({"error": "not found"}, 404)
-        self.send(200, f.read_bytes(), mimetypes.guess_type(f.name)[0] or "application/octet-stream", "no-cache")
+        self.send(200, hit[0].read_bytes(), hit[1], "no-cache")
 
     def do_POST(self):
         p = self.rel()
