@@ -31,10 +31,12 @@ html[data-wz-hosted][data-presentation="window"] .brand { visibility: hidden; }
 .dots i.on { background: var(--accent); border-color: var(--accent); }
 .dots i.cur { border-color: var(--ink); box-shadow: 0 0 0 2px var(--accent-soft); }
 
-.stage { flex: 1; overflow-y: auto; display: flex; flex-direction: column; justify-content: center; padding: 6px 2px; }
+.stage { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 6px 2px; }
+/* Centre short cards with auto margins, not justify-content:center: a centred flex child taller than the
+   scroll box overflows above its top edge, where it can't be scrolled to (mindfeed#5). */
+.stage > * { flex: none; margin-block: auto; }
 .card { background: var(--reader); border: 1px solid var(--line); border-radius: 22px; padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 12px; animation: in .28s ease-out; transition: transform .26s ease-in, opacity .26s ease-in; }
 .card.long { justify-content: flex-start; }
-.stage:has(.card.long) { justify-content: flex-start; }
 .card.out { opacity: 0; transform: translateY(-14px) scale(.98); }
 @keyframes in { from { opacity: 0; transform: translateY(14px); } }
 .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
