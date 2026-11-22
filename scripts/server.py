@@ -9,6 +9,7 @@ import http.server
 import json
 import mimetypes
 import os
+from pathlib import Path
 from urllib.parse import urlsplit
 
 DEFAULT_PORT = int(os.environ.get("MINDFEED_PORT", "8787"))
@@ -55,6 +56,32 @@ DATA_DIR = args.dir or SKILL_DIR
 ASSETS_DIR = os.path.join(SKILL_DIR, "assets")
 
 os.makedirs(DATA_DIR, exist_ok=True)
+
+
+def build_static(root):
+    """Map every real file under root (by its relative URL path) to (path, content type).
+
+    Built once at start-up: requests only look names up in this map, so a
+    request can never name a path or a content type itself. Symlinks are
+    resolved and dropped when they lead outside root.
+    """
+    base = Path(root).resolve()
+    files = {}
+    if not base.is_dir():
+        return files
+    for f in sorted(base.rglob("*")):
+        try:
+            real = f.resolve(strict=True)
+        except (OSError, RuntimeError):
+            continue
+        if not real.is_file() or base not in real.parents:
+            continue
+        ctype = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
+        files[f.relative_to(base).as_posix()] = (real, ctype)
+    return files
+
+
+STATIC = build_static(ASSETS_DIR)
 
 # Ensure cards.json exists
 cards_path = os.path.join(DATA_DIR, "cards.json")
@@ -111,13 +138,6 @@ class VaultReviewHandler(http.server.BaseHTTPRequestHandler):
         data["scope"] = scoped_root
         return json.dumps(data)
 
-    def _safe_asset_path(self, clean_path: str):
-        candidate = os.path.abspath(os.path.join(ASSETS_DIR, clean_path))
-        assets_root = os.path.abspath(ASSETS_DIR)
-        if not candidate.startswith(assets_root + os.sep) and candidate != assets_root:
-            return None
-        return candidate
-
     def do_GET(self):
         local_path = self._map_local_path()
         if local_path is None:
@@ -151,8 +171,10 @@ class VaultReviewHandler(http.server.BaseHTTPRequestHandler):
             return
 
         if local_path == "/sw.js":
-            self._serve_file(os.path.join(ASSETS_DIR, "sw.js"), "application/javascript")
-            return
+            hit = STATIC.get("sw.js")
+            if hit:
+                self._serve_file(hit[0], "application/javascript")
+                return
 
         if local_path.startswith("/cards.json"):
             self._serve_file(cards_path, "application/json")
@@ -162,11 +184,9 @@ class VaultReviewHandler(http.server.BaseHTTPRequestHandler):
             self._serve_file(state_path, "application/json")
             return
 
-        clean = local_path.lstrip("/").split("?")[0]
-        asset = self._safe_asset_path(clean)
-        if asset and os.path.exists(asset):
-            guessed, _ = mimetypes.guess_type(asset)
-            self._serve_file(asset, guessed or "application/octet-stream")
+        hit = STATIC.get(local_path.lstrip("/"))
+        if hit:
+            self._serve_file(hit[0], hit[1])
             return
 
         self.send_response(404)
